@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunset Point Amed Bali - Weekly IT Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        /* Menggunakan font Verdana sesuai permintaan */
+        body {
+            font-family: 'Verdana', sans-serif;
+            background-color: #f8f9fa;
+            color: #2d3436;
+        }
+
+        .primary-color {
+            color: #e67e22; /* Warna Oranye Konsisten */
+        }
+
+        .bg-primary {
+            background-color: #e67e22;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 1);
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-placeholder {
+            width: 60px;
+            height: 60px;
+            background-color: #e67e22;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Chart Styles */
+        .progress-ring {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* CUSTOM PRINT STYLES */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            
+            .no-print, .action-col, #input-container {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                padding: 0 !important;
+                font-family: 'Verdana', sans-serif !important;
+            }
+
+            .main-content {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .card {
+                border: 1px solid #adb5bd !important;
+                box-shadow: none !important;
+            }
+
+            .print-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 3px solid #e67e22;
+                padding-bottom: 15px;
+                margin-bottom: 20px;
+            }
+
+            .logo-placeholder {
+                background-color: #ffffff !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .primary-color {
+                color: #e67e22 !important;
+            }
+        }
+
+        .print-header { display: none; }
+        
+        input, select, textarea, button {
+            font-family: 'Verdana', sans-serif !important;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto main-content">
+        <!-- Header Khusus Print -->
+        <div class="print-header">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <!-- Tempat Logo untuk Print -->
+                <div class="logo-placeholder">
+                    <i class="fas fa-hotel"></i>
+                </div>
+                <div>
+                    <h1 style="font-size: 22pt; font-weight: bold; color: #e67e22; margin: 0; line-height: 1;">SUNSET POINT AMED BALI</h1>
+                    <p id="print-subtitle" style="font-size: 10pt; color: #444; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 1px;">LAPORAN MINGGUAN OPERASIONAL IT</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <p id="print-date-range" style="font-size: 9pt; margin: 0;"></p>
+                <p style="font-size: 10pt; color: #000; font-weight: bold; margin-top: 5px; border-top: 1px solid #eee; pt-1;">PIC: I KADEK BUDIASTIKA (IT)</p>
+            </div>
+        </div>
+
+        <!-- Header Dashboard (Web View) -->
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print border-b pb-8">
+            <div class="flex items-center gap-5">
+                <!-- Tempat Logo di Dashboard -->
+                <div class="logo-placeholder shadow-lg">
+                    <img src="spa1.png">
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold primary-color tracking-tight uppercase leading-none">SUNSET POINT AMED BALI</h1>
+                    <div class="flex flex-wrap items-center gap-3 mt-3 text-sm">
+                        <div class="bg-gray-100 px-3 py-1 rounded-lg flex items-center gap-2">
+                            <i class="fas fa-calendar-alt text-gray-400"></i>
+                            <p id="currentWeekRange" class="text-gray-600 font-bold italic"></p>
+                        </div>
+                        <span class="text-gray-300">|</span>
+                        <p class="font-bold text-gray-700 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">
+                            <i class="fas fa-user-tie primary-color mr-2"></i>IT: I KADEK BUDIASTIKA
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="bg-gray-800 hover:bg-black text-white px-5 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-md">
+                    <i class="fas fa-print text-blue-400"></i> PRINT MINGGUAN
+                </button>
+                <button onclick="exportToExcel()" class="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 px-5 py-3 rounded-xl font-bold transition-all flex items-center gap-2">
+                    <i class="fas fa-file-excel"></i> EXCEL
+                </button>
+            </div>
+        </header>
+
+        <!-- Statistik & Bagan -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-2xl border-t-4 border-t-orange-500">
+                <p class="text-[15px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Laporan Periode Ini</p>
+                <h2 id="count-total" class="text-4xl font-bold text-gray-800 tracking-tighter">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-2xl border-t-4 border-t-yellow-500">
+                <p class="text-[15px] font-bold text-gray-400 uppercase tracking-widest mb-1">Menunggu Tindakan</p>
+                <h2 id="count-pending" class="text-4xl font-bold text-gray-800 tracking-tighter">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500">
+                <p class="text-[15px] font-bold text-gray-400 uppercase tracking-widest mb-1">Berhasil Diselesaikan</p>
+                <h2 id="count-done" class="text-4xl font-bold text-gray-800 tracking-tighter">0</h2>
+            </div>
+            <!-- Progress Percentage Chart -->
+            <div class="glass-card p-4 rounded-2xl flex items-center gap-4 bg-white">
+                <div class="relative inline-flex items-center justify-center">
+                    <svg class="w-16 h-16">
+                        <circle class="text-gray-100" stroke-width="6" stroke="currentColor" fill="transparent" r="28" cx="32" cy="32"/>
+                        <circle id="progress-circle" class="text-green-500 progress-ring" stroke-width="6" stroke-dasharray="175.92" stroke-dashoffset="175.92" stroke-linecap="round" stroke="currentColor" fill="transparent" r="28" cx="32" cy="32"/>
+                    </svg>
+                    <span id="percent-text" class="absolute text-[11px] font-black">0%</span>
+                </div>
+                <div>
+                    <p class="text-[20px] font-bold text-gray-400 uppercase tracking-tighter">Hasil Kerja</p>
+                    <p class="text-xs font-bold text-gray-700 leading-tight">Rate Periode</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Form Input (Web Only) -->
+            <div id="input-container" class="lg:col-span-4 no-print">
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm sticky top-6">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-3 uppercase text-gray-700 tracking-tight">
+                        <i class="fas fa-plus-circle primary-color"></i> Input Laporan
+                    </h3>
+                    
+                    <form id="itForm" class="space-y-5">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block">Pilih Tanggal</label>
+                            <input type="date" id="reportDate" required
+                                class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:border-orange-500 transition-all font-medium text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block">Nama Staf / Pelapor</label>
+                            <input type="text" id="staff" placeholder="Nama..." required 
+                                class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:border-orange-500 transition-all font-medium text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block">Departemen</label>
+                            <select id="dept" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg outline-none focus:border-orange-500 transition-all font-bold text-sm">
+                                <option>IT</option>
+                                <option>Front Office/Cashier</option>
+                                <option>F&B Service</option>
+                                <option>Gelato</option>
+                                <option>Housekeeping</option>
+                                <option>Engineering</option>
+                                <option>Kitchen</option>
+                                <option>Storekeeper</option>
+                                <option>Security</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500 uppercase mb-2 block">Detail Kendala IT</label>
+                            <textarea id="issue" placeholder="Jelaskan masalahnya..." required 
+                                class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg h-28 outline-none focus:border-orange-500 transition-all font-medium text-sm resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-primary text-white py-4 rounded-lg font-bold shadow-lg hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase text-xs">
+                            <i class="fas fa-save"></i> Simpan ke Periode Aktif
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Kolom Tabel -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden card">
+                    <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-list-ul text-gray-400"></i> Rekapitulasi Periode 12 Jan - 18 Jan
+                        </h3>
+                        <span class="text-[10px] text-gray-400 font-bold italic">Sunset Point Amed</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left" id="reportTable">
+                            <thead>
+                                <tr class="bg-white text-gray-500 font-bold border-b">
+                                    <th class="px-6 py-4">HARI/TGL</th>
+                                    <th class="px-6 py-4">UNIT/STAF</th>
+                                    <th class="px-6 py-4">LAPORAN KENDALA</th>
+                                    <th class="px-6 py-4 text-center action-col">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-100">
+                                <!-- Data injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="emptyState" class="p-16 text-center hidden">
+                        <i class="fas fa-calendar-times text-gray-100 text-6xl mb-3"></i>
+                        <p class="text-gray-400 font-bold text-xs uppercase">Tidak ada laporan di periode ini</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-400 no-print pb-10 border-t pt-6">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-1">SUNSET POINT AMED BALI &copy; 2026</p>
+            <p class="text-[9px] font-bold uppercase">Weekly IT Support Summary - Custom Period</p>
+        </footer>
+    </div>
+
+    <script>
+        // Database key khusus untuk periode 12 Jan
+        let db = JSON.parse(localStorage.getItem('sunset_amed_p12jan_db')) || [];
+
+        // Konfigurasi Periode: 12 JAN 2026 (Senin) - 18 JAN 2026 (Minggu)
+        const START_DATE = new Date('2026-01-12T00:00:00');
+        const END_DATE = new Date('2026-01-18T23:59:59');
+
+        function setupUIHeader() {
+            const opt = { day: 'numeric', month: 'short', year: 'numeric' };
+            const rangeText = `${START_DATE.toLocaleDateString('id-ID', {day:'numeric', month:'short'})} - ${END_DATE.toLocaleDateString('id-ID', opt)}`;
+            
+            document.getElementById('currentWeekRange').innerText = `Periode Aktif: ${rangeText}`;
+            document.getElementById('print-date-range').innerText = `Periode: ${rangeText}`;
+            
+            // Set default date input ke hari ini jika masih dalam rentang, atau ke tgl 12
+            const today = new Date();
+            const inputDate = document.getElementById('reportDate');
+            if (today >= START_DATE && today <= END_DATE) {
+                inputDate.value = today.toISOString().split('T')[0];
+            } else {
+                inputDate.value = '2026-01-12';
+            }
+        }
+
+        const form = document.getElementById('itForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const selectedDate = new Date(document.getElementById('reportDate').value);
+            
+            const newData = {
+                id: Date.now(),
+                timestamp: selectedDate.getTime(),
+                dateDisplay: selectedDate.toLocaleDateString('id-ID', {weekday: 'short', day:'2-digit', month:'short'}),
+                staff: document.getElementById('staff').value,
+                dept: document.getElementById('dept').value,
+                issue: document.getElementById('issue').value,
+                status: 'Pending'
+            };
+            db.unshift(newData);
+            // Sort by date automatically
+            db.sort((a, b) => b.timestamp - a.timestamp);
+            updateUI();
+            form.reset();
+            setupUIHeader();
+        });
+
+        function updateUI() {
+            localStorage.setItem('sunset_amed_p12jan_db', JSON.stringify(db));
+            const body = document.getElementById('tableBody');
+            const empty = document.getElementById('emptyState');
+            
+            // Filter data yang masuk dalam rentang 12 Jan - 18 Jan
+            const periodData = db.filter(item => 
+                item.timestamp >= START_DATE.getTime() && 
+                item.timestamp <= END_DATE.getTime()
+            );
+
+            if (periodData.length === 0) {
+                body.innerHTML = '';
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                body.innerHTML = periodData.map(item => `
+                    <tr class="hover:bg-gray-50 transition-all border-b border-gray-50">
+                        <td class="px-6 py-5 whitespace-nowrap">
+                            <div class="font-bold text-gray-500 uppercase text-[10px]">${item.dateDisplay}</div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="font-bold text-gray-800 text-sm">${item.staff}</div>
+                            <div class="text-[10px] font-bold primary-color uppercase mt-1 tracking-wider">${item.dept}</div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="text-gray-600 font-medium leading-relaxed">${item.issue}</div>
+                        </td>
+                        <td class="px-6 py-5 text-center">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-[9px] px-2 py-1 rounded-md font-bold uppercase tracking-tighter ${item.status === 'Done' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                                    ${item.status === 'Done' ? 'SELESAI' : 'PROSES'}
+                                </span>
+                                <div class="flex gap-1 no-print">
+                                    <button onclick="toggleStatus(${item.id})" title="Selesai" class="p-1.5 text-blue-500 bg-blue-50 rounded hover:bg-blue-500 hover:text-white transition-all">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button onclick="deleteItem(${item.id})" title="Hapus" class="p-1.5 text-red-400 bg-red-50 rounded hover:bg-red-500 hover:text-white transition-all">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            const total = periodData.length;
+            const done = periodData.filter(x => x.status === 'Done').length;
+            const pending = periodData.filter(x => x.status === 'Pending').length;
+
+            document.getElementById('count-total').innerText = total;
+            document.getElementById('count-pending').innerText = pending;
+            document.getElementById('count-done').innerText = done;
+
+            // Update Progress Chart
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            const circle = document.getElementById('progress-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percent / 100) * circumference;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+            document.getElementById('percent-text').innerText = `${percent}%`;
+        }
+
+        function toggleStatus(id) {
+            const item = db.find(x => x.id === id);
+            item.status = item.status === 'Pending' ? 'Done' : 'Pending';
+            updateUI();
+        }
+
+        function deleteItem(id) {
+            if(confirm('Hapus laporan ini dari database periode?')) {
+                db = db.filter(x => x.id !== id);
+                updateUI();
+            }
+        }
+
+        function exportToExcel() {
+            if(db.length === 0) return alert('Tidak ada data untuk diekspor');
+            const exportData = db.map(r => ({
+                'TANGGAL': r.dateDisplay,
+                'NAMA STAF': r.staff,
+                'DEPARTEMEN': r.dept,
+                'KENDALA': r.issue,
+                'STATUS': r.status === 'Done' ? 'SELESAI' : 'PROSES',
+                'PIC IT': 'I KADEK BUDIASTIKA'
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Weekly_12Jan_Report");
+            XLSX.writeFile(wb, `Laporan_Mingguan_IT_12Jan_18Jan.xlsx`);
+        }
+
+        setupUIHeader();
+        updateUI();
+    </script>
+</body>
+</html>
